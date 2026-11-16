@@ -1,0 +1,667 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inversión BRENT - Calculadora</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(180deg, #fafafa 0%, #f0f0f5 100%);
+            color: #1a1a1a;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 0 20px;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: slideDownFade 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+        }
+
+        .header .tagline {
+            font-size: 0.95em;
+            color: #666;
+            font-weight: 400;
+        }
+
+        /* News ticker */
+        .news-bar {
+            background: white;
+            border-radius: 16px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUpFade 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+        }
+
+        .ticker-wrap {
+            display: flex;
+            width: max-content;
+            animation: ticker 20s linear infinite;
+        }
+
+        .ticker-item {
+            white-space: nowrap;
+            padding: 0 25px;
+            font-size: 0.85em;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ticker-dot {
+            width: 6px;
+            height: 6px;
+            background: #667eea;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Investment card */
+        .investment-card {
+            background: white;
+            border-radius: 24px;
+            padding: 30px 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            opacity: 0;
+            transform: scale(0.95);
+            animation: scaleIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+        }
+
+        .amount-section {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .amount-label {
+            font-size: 0.8em;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .amount-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1;
+        }
+
+        /* Slider container */
+        .slider-container {
+            background: white;
+            border-radius: 24px;
+            padding: 30px 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUpFade 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards;
+        }
+
+        .slider-label {
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+
+        .slider-wrapper {
+            position: relative;
+            padding: 10px 0;
+        }
+
+        .slider-track {
+            position: relative;
+            height: 10px;
+            background: #e8e8ed;
+            border-radius: 5px;
+            margin: 25px 0;
+        }
+
+        .slider-fill {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+            transition: width 0.05s ease;
+            width: 40%;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 10px;
+            background: transparent;
+            outline: none;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+            transition: all 0.2s ease;
+            border: 4px solid white;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.7);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.25);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+            border: 4px solid white;
+        }
+
+        .slider-value {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .percent-display {
+            font-size: 3.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            transition: all 0.1s ease;
+        }
+
+        .percent-symbol {
+            font-size: 0.5em;
+            vertical-align: super;
+        }
+
+        .percent-label {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .slider-limits {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 0.85em;
+            color: #999;
+            font-weight: 500;
+        }
+
+        /* Result card */
+        .result-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 24px;
+            padding: 35px 25px;
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideUpFade 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+            animation: rotate 15s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .calculation-formula {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .result-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+            font-weight: 600;
+        }
+
+        .result-amount {
+            font-size: 3.5em;
+            font-weight: 700;
+            margin: 15px 0;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .result-description {
+            font-size: 1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+            margin-top: 10px;
+        }
+
+        /* Chart */
+        .chart-container {
+            background: white;
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideUpFade 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s forwards;
+        }
+
+        .chart-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #1a1a1a;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 250px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 25px 20px;
+            color: #999;
+            font-size: 0.75em;
+            opacity: 0;
+            animation: fadeIn 1s ease 0.8s forwards;
+        }
+
+        /* Animations */
+        @keyframes slideDownFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUpFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .amount-value {
+                font-size: 2em;
+            }
+
+            .percent-display {
+                font-size: 3em;
+            }
+
+            .result-amount {
+                font-size: 3em;
+            }
+
+            .investment-card,
+            .slider-container,
+            .chart-container {
+                padding: 20px 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <div class="header">
+            <h1>Petróleo BRENT</h1>
+            <div class="tagline">Calculadora de Porcentaje</div>
+        </div>
+
+        <div class="news-bar">
+            <div class="ticker-wrap">
+                <div class="ticker-item"><span class="ticker-dot"></span>Brent en tendencia alcista sostenida</div>
+                <div class="ticker-item"><span class="ticker-dot"></span>Demanda global +5% este trimestre</div>
+                <div class="ticker-item"><span class="ticker-dot"></span>OPEP+ mantiene recortes de producción</div>
+                <div class="ticker-item"><span class="ticker-dot"></span>Análisis técnico favorable para entrada</div>
+                <div class="ticker-item"><span class="ticker-dot"></span>Brent en tendencia alcista sostenida</div>
+                <div class="ticker-item"><span class="ticker-dot"></span>Demanda global +5% este trimestre</div>
+                <div class="ticker-item"><span class="ticker-dot"></span>OPEP+ mantiene recortes de producción</div>
+                <div class="ticker-item"><span class="ticker-dot"></span>Análisis técnico favorable para entrada</div>
+            </div>
+        </div>
+
+        <div class="investment-card">
+            <div class="amount-section">
+                <div class="amount-label">Capital Base</div>
+                <div class="amount-value">€40,000</div>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <div class="slider-label">Selecciona el porcentaje deseado</div>
+            <div class="slider-wrapper">
+                <div class="slider-track">
+                    <div class="slider-fill" id="sliderFill"></div>
+                </div>
+                <input type="range" id="percentSlider" min="1" max="35" value="15" step="1">
+            </div>
+            <div class="slider-value">
+                <div class="percent-display">
+                    <span id="percentValue">15</span><span class="percent-symbol">%</span>
+                </div>
+                <div class="percent-label">Porcentaje seleccionado</div>
+            </div>
+            <div class="slider-limits">
+                <span>1%</span>
+                <span>35%</span>
+            </div>
+        </div>
+
+        <div class="result-card">
+            <div class="calculation-formula" id="formula">40,000 × 15% = €6,000</div>
+            <div class="result-label">Resultado del Cálculo</div>
+            <div class="result-amount" id="resultAmount">€6,000</div>
+            <div class="result-description" id="resultDesc">15% de €40,000 es igual a €6,000</div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">Comparativa Visual</div>
+            <div class="chart-wrapper">
+                <canvas id="chart"></canvas>
+            </div>
+        </div>
+
+        <div class="footer">
+            Cálculo básico de porcentaje • Multiplicación directa
+        </div>
+
+    </div>
+
+    <script>
+        const investment = 40000;
+        let currentPercent = 15;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const slider = document.getElementById('percentSlider');
+            slider.value = 15;
+            calculate(15);
+
+            slider.addEventListener('input', function() {
+                const value = parseInt(this.value, 10);
+                currentPercent = value;
+                calculate(value);
+            });
+        });
+
+        function calculate(percent) {
+            const sliderFill = document.getElementById('sliderFill');
+            const fillPercentage = ((percent - 1) / (35 - 1)) * 100;
+            sliderFill.style.width = fillPercentage + '%';
+
+            document.getElementById('percentValue').textContent = percent;
+
+            const result = investment * (percent / 100);
+
+            document.getElementById('formula').textContent =
+                `40,000 × ${percent}% = ${formatCurrency(result)}`;
+
+            animateValue('resultAmount', result);
+
+            document.getElementById('resultDesc').textContent =
+                `${percent}% de €40,000 es igual a ${formatCurrency(result)}`;
+
+            drawChart(percent, result);
+        }
+
+        function animateValue(id, endValue) {
+            const obj = document.getElementById(id);
+            const startValue = parseFloat(
+                obj.textContent.replace(/[^0-9.-]/g, '').replace(/\./g, '').replace(',', '.')
+            ) || 0;
+
+            const duration = 300;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+
+                const currentValue = startValue + (endValue - startValue) * easeOutQuart;
+                obj.textContent = formatCurrency(currentValue);
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-ES', {
+                style: 'currency',
+                currency: 'EUR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(Math.round(amount));
+        }
+
+        function drawChart(currentPercent, currentValue) {
+            const canvas = document.getElementById('chart');
+            const ctx = canvas.getContext('2d');
+
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect();
+
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+
+            const width = rect.width;
+            const height = rect.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const samples = [5, 10, 15, 20, 25, 30, 35];
+            const values = samples.map(p => investment * (p / 100));
+            const maxValue = Math.max(...values) * 1.2;
+
+            const padding = { top: 20, right: 20, bottom: 40, left: 70 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+
+            const barWidth = chartWidth / samples.length * 0.6;
+            const barSpacing = chartWidth / samples.length;
+
+            samples.forEach((percent, idx) => {
+                const value = values[idx];
+                const barHeight = (value / maxValue) * chartHeight;
+                const x = padding.left + (barSpacing * idx) + (barSpacing - barWidth) / 2;
+                const y = padding.top + chartHeight - barHeight;
+
+                const isCurrent = percent === currentPercent;
+                const gradient = ctx.createLinearGradient(x, y, x, padding.top + chartHeight);
+
+                if (isCurrent) {
+                    gradient.addColorStop(0, '#667eea');
+                    gradient.addColorStop(1, '#764ba2');
+                } else {
+                    gradient.addColorStop(0, '#e0e0e0');
+                    gradient.addColorStop(1, '#d0d0d0');
+                }
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+
+                if (typeof ctx.roundRect === 'function') {
+                    ctx.roundRect(x, y, barWidth, barHeight, [8, 8, 0, 0]);
+                } else {
+                    ctx.rect(x, y, barWidth, barHeight);
+                }
+
+                ctx.fill();
+
+                if (isCurrent) {
+                    ctx.shadowColor = 'rgba(102, 126, 234, 0.5)';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.fillStyle = isCurrent ? '#667eea' : '#999';
+                ctx.font = isCurrent ? 'bold 12px -apple-system, sans-serif' : '11px -apple-system, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${percent}%`, x + barWidth / 2, padding.top + chartHeight + 20);
+
+                if (isCurrent || barHeight > 40) {
+                    ctx.fillStyle = isCurrent ? 'white' : '#666';
+                    ctx.font = '10px -apple-system, sans-serif';
+                    ctx.fillText(formatCurrency(value), x + barWidth / 2, y - 8);
+                }
+            });
+
+            ctx.fillStyle = '#999';
+            ctx.font = '10px -apple-system, sans-serif';
+            ctx.textAlign = 'right';
+
+            for (let i = 0; i <= 4; i++) {
+                const y = padding.top + (chartHeight / 4) * i;
+                const value = maxValue - (maxValue / 4) * i;
+
+                ctx.fillText(formatCurrency(value), padding.left - 8, y + 3);
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(width - padding.right, y);
+                ctx.stroke();
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            setTimeout(() => calculate(currentPercent), 100);
+        });
+    </script>
+</body>
+</html>
